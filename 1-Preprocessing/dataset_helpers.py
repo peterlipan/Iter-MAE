@@ -7,6 +7,29 @@ from PIL import Image
 from pathlib import Path
 from torch.utils.data import Dataset
 from torchvision import transforms
+import multiprocessing.pool
+
+
+class NoDaemonProcess(multiprocessing.Process):
+    @property
+    def daemon(self):
+        return False
+
+    @daemon.setter
+    def daemon(self, value):
+        pass
+
+
+class NoDaemonContext(type(multiprocessing.get_context())):
+    Process = NoDaemonProcess
+
+
+# We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
+# because the latter is only a wrapper function, not a proper class.
+class Pool(multiprocessing.pool.Pool):
+    def __init__(self, *args, **kwargs):
+        kwargs['context'] = NoDaemonContext()
+        super(Pool, self).__init__(*args, **kwargs)
 
 
 class Whole_Slide_Bag(Dataset):
